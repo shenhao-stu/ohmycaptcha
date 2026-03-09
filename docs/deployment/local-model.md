@@ -14,17 +14,17 @@ OhMyCaptcha uses two model backends:
 | **Cloud model** | Audio transcription & complex reasoning (powerful remote API) | `CLOUD_BASE_URL`, `CLOUD_API_KEY`, `CLOUD_MODEL` | External endpoint, your key, `gpt-5.4` |
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    OhMyCaptcha                       │
-│                                                     │
-│  Browser tasks ──► Playwright (reCAPTCHA, Turnstile) │
-│                                                     │
-│  Image tasks ───► Local Model (SGLang / vLLM)       │
-│                    └─ Qwen3.5-2B on localhost:30000  │
-│                                                     │
-│  Audio tasks ───► Cloud Model (remote API)          │
-│                    └─ gpt-5.4 via external endpoint  │
-└─────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────┐
+│                      OhMyCaptcha                            │
+│                                                            │
+│  Browser tasks ──► Playwright (reCAPTCHA, Turnstile)        │
+│                                                            │
+│  Image tasks ───► Local Model (SGLang / vLLM)               │
+│                   └─ Qwen3.5-2B on localhost:30000          │
+│                                                            │
+│  Audio tasks ───► Cloud Model (remote API)                  │
+│                   └─ gpt-5.4 via external endpoint          │
+└────────────────────────────────────────────────────────────┘
 ```
 
 ## Prerequisites
