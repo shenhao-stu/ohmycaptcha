@@ -68,6 +68,9 @@ export CLOUD_BASE_URL="https://your-openai-compatible-endpoint/v1"
 export CLOUD_API_KEY="your-api-key"
 export CLOUD_MODEL="gpt-5.4"
 
+# 可选：让浏览器类 solver 通过代理出网
+export BROWSER_PROXY_SERVER="socks5://127.0.0.1:7890"
+
 export CLIENT_KEY="your-client-key"
 python main.py
 ```
@@ -234,10 +237,12 @@ OhMyCaptcha 使用两种模型后端 —— **本地模型**处理图像任务�
 | `CAPTCHA_TIMEOUT` | 模型请求超时（秒） | `30` |
 | `BROWSER_HEADLESS` | 无头浏览器 | `true` |
 | `BROWSER_TIMEOUT` | 页面加载超时（秒） | `30` |
+| `BROWSER_PROXY_SERVER` | Playwright 浏览器显式代理（`socks5://...`、`http://...`） | 未设置 |
 | `SERVER_HOST` | 监听地址 | `0.0.0.0` |
 | `SERVER_PORT` | 监听端口 | `8000` |
 
 > 旧版变量（`CAPTCHA_BASE_URL`、`CAPTCHA_API_KEY`、`CAPTCHA_MODEL`、`CAPTCHA_MULTIMODAL_MODEL`）仍支持作为回退。
+> 浏览器代理回退顺序：`BROWSER_PROXY_SERVER` → `ALL_PROXY` → `HTTPS_PROXY` → `HTTP_PROXY`。
 
 ---
 

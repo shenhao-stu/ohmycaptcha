@@ -54,16 +54,19 @@ class TurnstileSolver:
         if self._browser is not None:
             return
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(
-            headless=self._config.browser_headless,
-            args=[
+        launch_kwargs: dict[str, Any] = {
+            "headless": self._config.browser_headless,
+            "args": [
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
                 "--disable-gpu",
             ],
-        )
-        log.info("TurnstileSolver browser started")
+        }
+        if self._config.browser_proxy_server:
+            launch_kwargs["proxy"] = {"server": self._config.browser_proxy_server}
+        self._browser = await self._playwright.chromium.launch(**launch_kwargs)
+        log.info("TurnstileSolver browser started (proxy=%s)", self._config.browser_proxy_server or "none")
 
     async def stop(self) -> None:
         if self._owns_browser:
@@ -114,7 +117,14 @@ class TurnstileSolver:
 
         try:
             timeout_ms = self._config.browser_timeout * 1000
-            await page.goto(website_url, wait_until="networkidle", timeout=timeout_ms)
+            await page.goto(website_url, wait_until="domcontentloaded", timeout=timeout_ms)
+            try:
+                await page.wait_for_load_state("networkidle", timeout=min(5000, timeout_ms))
+            except Exception:
+                log.info(
+                    "networkidle not reached quickly for %s, continuing after DOMContentLoaded",
+                    website_url,
+                )
 
             await page.mouse.move(400, 300)
             await asyncio.sleep(1)
