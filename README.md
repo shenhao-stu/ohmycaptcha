@@ -68,6 +68,9 @@ export CLOUD_BASE_URL="https://your-openai-compatible-endpoint/v1"
 export CLOUD_API_KEY="your-api-key"
 export CLOUD_MODEL="gpt-5.4"
 
+# Optional: route browser-based solvers through a proxy
+export BROWSER_PROXY_SERVER="socks5://127.0.0.1:7890"
+
 export CLIENT_KEY="your-client-key"
 python main.py
 ```
@@ -234,10 +237,12 @@ OhMyCaptcha uses two model backends — a **local model** for image tasks and a 
 | `CAPTCHA_TIMEOUT` | Model timeout (seconds) | `30` |
 | `BROWSER_HEADLESS` | Headless Chromium | `true` |
 | `BROWSER_TIMEOUT` | Page load timeout (seconds) | `30` |
+| `BROWSER_PROXY_SERVER` | Explicit proxy for Playwright browser (`socks5://...`, `http://...`) | unset |
 | `SERVER_HOST` | Bind host | `0.0.0.0` |
 | `SERVER_PORT` | Bind port | `8000` |
 
 > Legacy vars (`CAPTCHA_BASE_URL`, `CAPTCHA_API_KEY`, `CAPTCHA_MODEL`, `CAPTCHA_MULTIMODAL_MODEL`) are supported as fallbacks.
+> Browser proxy fallback order: `BROWSER_PROXY_SERVER` → `ALL_PROXY` → `HTTPS_PROXY` → `HTTP_PROXY`.
 
 ---
 

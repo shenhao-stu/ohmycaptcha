@@ -20,6 +20,15 @@ import os
 from dataclasses import dataclass
 
 
+
+def _first_env(*names: str) -> str | None:
+    for name in names:
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return None
+
+
 @dataclass(frozen=True)
 class Config:
     server_host: str
@@ -44,6 +53,7 @@ class Config:
     # Playwright browser
     browser_headless: bool
     browser_timeout: int  # seconds
+    browser_proxy_server: str | None
 
     # ── Convenience aliases (backward-compat) ──
 
@@ -100,6 +110,9 @@ def load_config() -> Config:
         browser_headless=os.environ.get("BROWSER_HEADLESS", "true").strip().lower()
         in {"1", "true", "yes"},
         browser_timeout=int(os.environ.get("BROWSER_TIMEOUT", "30")),
+        browser_proxy_server=_first_env(
+            "BROWSER_PROXY_SERVER", "ALL_PROXY", "HTTPS_PROXY", "HTTP_PROXY"
+        ),
     )
 
 
