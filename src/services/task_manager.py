@@ -10,7 +10,13 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Protocol
 
+from ..core.config import config
+
 log = logging.getLogger(__name__)
+
+
+class TaskQueueFullError(RuntimeError):
+    """Raised when active tasks reach the configured queue limit."""
 
 
 class TaskStatus(str, Enum):
@@ -38,15 +44,28 @@ class Solver(Protocol):
 class TaskManager:
     TASK_TTL = timedelta(minutes=10)
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        max_concurrent_tasks: int | None = None,
+        max_queued_tasks: int | None = None,
+    ) -> None:
         self._tasks: dict[str, Task] = {}
         self._solvers: dict[str, Solver] = {}
+        self._max_concurrent = max_concurrent_tasks or config.max_concurrent_tasks
+        self._max_queued = max_queued_tasks or config.max_queued_tasks
+        self._semaphore = asyncio.Semaphore(self._max_concurrent)
 
     def register_solver(self, task_type: str, solver: Solver) -> None:
         self._solvers[task_type] = solver
 
     def create_task(self, task_type: str, params: dict[str, Any]) -> str:
         self._cleanup_expired()
+        active_count = sum(
+            1 for t in self._tasks.values() if t.status == TaskStatus.PROCESSING
+        )
+        if active_count >= self._max_queued:
+            raise TaskQueueFullError("Task queue is full")
         task_id = str(uuid.uuid4())
         task = Task(id=task_id, type=task_type, params=params)
         self._tasks[task_id] = task
@@ -68,7 +87,8 @@ class TaskManager:
             return
 
         try:
-            solution = await solver.solve(task.params)
+            async with self._semaphore:
+                solution = await solver.solve(task.params)
             task.solution = solution
             task.status = TaskStatus.READY
             log.info("Task %s completed successfully", task.id)
@@ -83,7 +103,7 @@ class TaskManager:
         expired = [
             tid
             for tid, t in self._tasks.items()
-            if now - t.created_at > self.TASK_TTL
+            if t.status != TaskStatus.PROCESSING and now - t.created_at > self.TASK_TTL
         ]
         for tid in expired:
             del self._tasks[tid]

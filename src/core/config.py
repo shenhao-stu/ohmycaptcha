@@ -45,6 +45,9 @@ class Config:
     browser_headless: bool
     browser_timeout: int  # seconds
 
+    max_concurrent_tasks: int = 5
+    max_queued_tasks: int = 100
+
     # ── Convenience aliases (backward-compat) ──
 
     @property
@@ -100,6 +103,8 @@ def load_config() -> Config:
         browser_headless=os.environ.get("BROWSER_HEADLESS", "true").strip().lower()
         in {"1", "true", "yes"},
         browser_timeout=int(os.environ.get("BROWSER_TIMEOUT", "30")),
+        max_concurrent_tasks=max(1, int(os.environ.get("MAX_CONCURRENT_TASKS", "5"))),
+        max_queued_tasks=max(1, int(os.environ.get("MAX_QUEUED_TASKS", "100"))),
     )
 
 
