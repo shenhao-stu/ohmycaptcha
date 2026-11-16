@@ -24,15 +24,20 @@ window.chrome = {runtime: {}, loadTimes: () => {}, csi: () => {}};
 """
 
 _EXTRACT_TURNSTILE_TOKEN_JS = """
-() => {
+(sitekey) => {
+    const scope = sitekey
+        ? Array.from(document.querySelectorAll('[data-sitekey]'))
+            .find((el) => el.getAttribute('data-sitekey') === sitekey) || null
+        : null;
+    const root = scope || document;
     // Check for Turnstile response input
-    const input = document.querySelector('[name="cf-turnstile-response"]')
-        || document.querySelector('input[name*="turnstile"]');
+    const input = root.querySelector('[name="cf-turnstile-response"]')
+        || root.querySelector('input[name*="turnstile"]');
     if (input && input.value && input.value.length > 20) {
         return input.value;
     }
-    // Try the turnstile API
-    if (window.turnstile && typeof window.turnstile.getResponse === 'function') {
+    // Try the turnstile API only when not scoped to a specific widget
+    if (!scope && window.turnstile && typeof window.turnstile.getResponse === 'function') {
         const resp = window.turnstile.getResponse();
         if (resp && resp.length > 20) return resp;
     }
@@ -121,9 +126,7 @@ class TurnstileSolver:
 
             # Try clicking the Turnstile checkbox
             try:
-                iframe_element = page.frame_locator(
-                    'iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]'
-                )
+                iframe_element = await self._checkbox_frame(page, website_key)
                 checkbox = iframe_element.locator(
                     'input[type="checkbox"], .ctp-checkbox-label, label'
                 )
@@ -134,7 +137,7 @@ class TurnstileSolver:
             # Wait for the token to appear
             for _ in range(15):
                 await asyncio.sleep(2)
-                token = await page.evaluate(_EXTRACT_TURNSTILE_TOKEN_JS)
+                token = await page.evaluate(_EXTRACT_TURNSTILE_TOKEN_JS, website_key)
                 if token:
                     log.info("Got Turnstile token (len=%d)", len(token))
                     return token
@@ -142,3 +145,13 @@ class TurnstileSolver:
             raise RuntimeError("Turnstile token not obtained within timeout")
         finally:
             await context.close()
+
+    async def _checkbox_frame(self, page: Any, website_key: str) -> Any:
+        """Return the Turnstile frame locator scoped by websiteKey when present."""
+        if website_key:
+            scoped = f'[data-sitekey="{website_key}"] iframe'
+            if await page.locator(scoped).count() > 0:
+                return page.frame_locator(scoped)
+        return page.frame_locator(
+            'iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]'
+        )

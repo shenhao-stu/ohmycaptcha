@@ -33,14 +33,19 @@ window.chrome = {runtime: {}, loadTimes: () => {}, csi: () => {}};
 """
 
 _EXTRACT_TOKEN_JS = """
-() => {
-    const textarea = document.querySelector('#g-recaptcha-response')
-        || document.querySelector('[name="g-recaptcha-response"]');
+(sitekey) => {
+    const scope = sitekey
+        ? Array.from(document.querySelectorAll('[data-sitekey]'))
+            .find((el) => el.getAttribute('data-sitekey') === sitekey) || null
+        : null;
+    const root = scope || document;
+    const textarea = root.querySelector('#g-recaptcha-response')
+        || root.querySelector('[name="g-recaptcha-response"]');
     if (textarea && textarea.value && textarea.value.length > 20) {
         return textarea.value;
     }
     const gr = window.grecaptcha?.enterprise || window.grecaptcha;
-    if (gr && typeof gr.getResponse === 'function') {
+    if (!scope && gr && typeof gr.getResponse === 'function') {
         const resp = gr.getResponse();
         if (resp && resp.length > 20) return resp;
     }
@@ -147,7 +152,7 @@ class RecaptchaV2Solver:
                     [website_key],
                 )
             else:
-                token = await self._solve_checkbox(page)
+                token = await self._solve_checkbox(page, website_key)
 
             if not isinstance(token, str) or len(token) < 20:
                 raise RuntimeError(f"Invalid reCAPTCHA v2 token: {token!r}")
@@ -157,30 +162,38 @@ class RecaptchaV2Solver:
         finally:
             await context.close()
 
-    async def _solve_checkbox(self, page: Any) -> str | None:
+    async def _checkbox_frame(self, page: Any, website_key: str = "") -> Any:
+        """Return the reCAPTCHA checkbox frame locator scoped by websiteKey when present."""
+        base_selector = 'iframe[title="reCAPTCHA"]'
+        if website_key:
+            scoped = f'[data-sitekey="{website_key}"] {base_selector}'
+            if await page.locator(scoped).count() > 0:
+                return page.frame_locator(scoped).first
+        return page.frame_locator(base_selector).first
+
+    async def _solve_checkbox(self, page: Any, website_key: str = "") -> str | None:
         """Click the reCAPTCHA checkbox. If a visual challenge appears, try audio path."""
-        # The checkbox iframe always has title="reCAPTCHA"
-        checkbox_frame = page.frame_locator('iframe[title="reCAPTCHA"]').first
+        checkbox_frame = await self._checkbox_frame(page, website_key)
         checkbox = checkbox_frame.locator("#recaptcha-anchor")
         await checkbox.click(timeout=10_000)
         await asyncio.sleep(2)
 
         # Check if token was issued immediately (low-risk sessions)
-        token = await page.evaluate(_EXTRACT_TOKEN_JS)
+        token = await page.evaluate(_EXTRACT_TOKEN_JS, website_key)
         if isinstance(token, str) and len(token) > 20:
             return token
 
         # Challenge dialog appeared — try audio challenge path
         log.info("reCAPTCHA challenge detected, attempting audio path")
         try:
-            token = await self._solve_audio_challenge(page)
+            token = await self._solve_audio_challenge(page, website_key)
         except Exception as exc:
             log.warning("Audio challenge path failed: %s", exc)
             token = None
 
         return token
 
-    async def _solve_audio_challenge(self, page: Any) -> str | None:
+    async def _solve_audio_challenge(self, page: Any, website_key: str = "") -> str | None:
         """Click the audio button in the bframe and transcribe the audio."""
         # The challenge bframe has title containing "recaptcha challenge"
         bframe = page.frame_locator('iframe[title*="recaptcha challenge"]')
@@ -233,7 +246,7 @@ class RecaptchaV2Solver:
         await verify_btn.click(timeout=8_000)
         await asyncio.sleep(2)
 
-        return await page.evaluate(_EXTRACT_TOKEN_JS)
+        return await page.evaluate(_EXTRACT_TOKEN_JS, website_key)
 
     async def _transcribe_audio(self, audio_bytes: bytes) -> str | None:
         """Send audio bytes to the OpenAI-compatible audio transcription endpoint."""

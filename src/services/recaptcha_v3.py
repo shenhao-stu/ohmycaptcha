@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 # JS executed inside the browser to obtain a reCAPTCHA v3 token.
 # Handles both standard and enterprise reCAPTCHA libraries.
 _EXECUTE_JS = """
-([key, action]) => new Promise((resolve, reject) => {
+([key, action, isEnterprise]) => new Promise((resolve, reject) => {
     const gr = window.grecaptcha?.enterprise || window.grecaptcha;
     if (gr && typeof gr.execute === 'function') {
         gr.ready(() => {
@@ -23,12 +23,15 @@ _EXECUTE_JS = """
         });
         return;
     }
-    // grecaptcha not loaded yet — inject the script ourselves
+    // grecaptcha not loaded yet — inject the appropriate standard or enterprise script
     const script = document.createElement('script');
-    script.src = 'https://www.google.com/recaptcha/api.js?render=' + key;
+    const base = isEnterprise
+        ? 'https://www.google.com/recaptcha/enterprise.js?render='
+        : 'https://www.google.com/recaptcha/api.js?render=';
+    script.src = base + key;
     script.onerror = () => reject(new Error('Failed to load reCAPTCHA script'));
     script.onload = () => {
-        const g = window.grecaptcha;
+        const g = window.grecaptcha?.enterprise || window.grecaptcha;
         if (!g) { reject(new Error('grecaptcha still undefined after script load')); return; }
         g.ready(() => {
             g.execute(key, {action}).then(resolve).catch(reject);
@@ -81,12 +84,16 @@ class RecaptchaV3Solver:
         website_url = params["websiteURL"]
         website_key = params["websiteKey"]
         page_action = params.get("pageAction", "verify")
+        is_enterprise = "Enterprise" in params.get("type", "")
 
         last_error: Exception | None = None
         for attempt in range(self._config.captcha_retries):
             try:
                 token = await self._solve_once(
-                    website_url, website_key, page_action
+                    website_url,
+                    website_key,
+                    page_action,
+                    is_enterprise=is_enterprise,
                 )
                 return {"gRecaptchaResponse": token}
             except Exception as exc:
@@ -106,7 +113,12 @@ class RecaptchaV3Solver:
         )
 
     async def _solve_once(
-        self, website_url: str, website_key: str, page_action: str
+        self,
+        website_url: str,
+        website_key: str,
+        page_action: str,
+        *,
+        is_enterprise: bool = False,
     ) -> str:
         assert self._browser is not None
 
@@ -147,7 +159,9 @@ class RecaptchaV3Solver:
                     "grecaptcha not detected on page, will attempt script injection"
                 )
 
-            token = await page.evaluate(_EXECUTE_JS, [website_key, page_action])
+            token = await page.evaluate(
+                _EXECUTE_JS, [website_key, page_action, is_enterprise]
+            )
 
             if not isinstance(token, str) or len(token) < 20:
                 raise RuntimeError(f"Invalid token received: {token!r}")
