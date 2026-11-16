@@ -236,8 +236,8 @@ Example response:
     "AwsClassification"
   ],
   "browser_headless": true,
-  "captcha_model": "gpt-5.4",
-  "captcha_multimodal_model": "qwen3.5-2b"
+  "cloud_model": "gpt-5.4",
+  "local_model": "Qwen/Qwen3.5-2B"
 }
 ```
 

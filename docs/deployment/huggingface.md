@@ -36,13 +36,15 @@ In Hugging Face:
 In the Space settings, add the following secrets:
 
 - `CLIENT_KEY`
-- `CAPTCHA_API_KEY`
+- `CLOUD_API_KEY`
+- `LOCAL_API_KEY`
 
 Add or override variables as needed:
 
-- `CAPTCHA_BASE_URL`
-- `CAPTCHA_MODEL`
-- `CAPTCHA_MULTIMODAL_MODEL`
+- `CLOUD_BASE_URL`
+- `CLOUD_MODEL`
+- `LOCAL_BASE_URL`
+- `LOCAL_MODEL`
 - `BROWSER_HEADLESS=true`
 - `BROWSER_TIMEOUT=30`
 - `SERVER_PORT=7860`

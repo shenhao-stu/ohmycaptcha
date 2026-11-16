@@ -22,10 +22,12 @@ playwright install --with-deps chromium
 | Variable | Description | Default |
 | --- | --- | --- |
 | `CLIENT_KEY` | Client auth key used as `clientKey` | unset |
-| `CAPTCHA_BASE_URL` | OpenAI-compatible API base URL | `https://your-openai-compatible-endpoint/v1` |
-| `CAPTCHA_API_KEY` | API key for your model provider | unset |
-| `CAPTCHA_MODEL` | Strong text model | `gpt-5.4` |
-| `CAPTCHA_MULTIMODAL_MODEL` | Multimodal model | `qwen3.5-2b` |
+| `LOCAL_BASE_URL` | Local OpenAI-compatible inference server (SGLang/vLLM) | `http://localhost:30000/v1` |
+| `LOCAL_API_KEY` | Local server API key | `EMPTY` |
+| `LOCAL_MODEL` | Local multimodal model | `Qwen/Qwen3.5-2B` |
+| `CLOUD_BASE_URL` | Cloud OpenAI-compatible API base URL | `https://your-openai-compatible-endpoint/v1` |
+| `CLOUD_API_KEY` | API key for your cloud model provider | unset |
+| `CLOUD_MODEL` | Cloud model | `gpt-5.4` |
 | `CAPTCHA_RETRIES` | Retry count | `3` |
 | `CAPTCHA_TIMEOUT` | Model timeout in seconds | `30` |
 | `BROWSER_HEADLESS` | Run Chromium headless | `true` |
@@ -33,14 +35,19 @@ playwright install --with-deps chromium
 | `SERVER_HOST` | Bind host | `0.0.0.0` |
 | `SERVER_PORT` | Bind port | `8000` |
 
+> Legacy variables (`CAPTCHA_BASE_URL`, `CAPTCHA_API_KEY`, `CAPTCHA_MODEL`, `CAPTCHA_MULTIMODAL_MODEL`) are supported as fallbacks when `LOCAL_*` / `CLOUD_*` are unset.
+
 ## Start the service
+
+If you use `LOCAL_BASE_URL`, start your local SGLang/vLLM inference server first (see [Local Model Deployment](deployment/local-model.md)), or point `LOCAL_BASE_URL` to a remote OpenAI-compatible vision endpoint.
 
 ```bash
 export CLIENT_KEY="your-client-key"
-export CAPTCHA_BASE_URL="https://your-openai-compatible-endpoint/v1"
-export CAPTCHA_API_KEY="your-api-key"
-export CAPTCHA_MODEL="gpt-5.4"
-export CAPTCHA_MULTIMODAL_MODEL="qwen3.5-2b"
+export LOCAL_BASE_URL="http://localhost:30000/v1"
+export LOCAL_MODEL="Qwen/Qwen3.5-2B"
+export CLOUD_BASE_URL="https://your-openai-compatible-endpoint/v1"
+export CLOUD_API_KEY="your-api-key"
+export CLOUD_MODEL="gpt-5.4"
 python main.py
 ```
 
