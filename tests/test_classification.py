@@ -40,6 +40,11 @@ def _sample_b64_png() -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 @pytest.mark.anyio
 async def test_hcaptcha_queries_without_question_sends_string_text() -> None:
     """When question is omitted, queries must not be passed as a list to text content."""
@@ -90,3 +95,31 @@ async def test_hcaptcha_boolean_answer_preserves_boolean() -> None:
     )
 
     assert result == {"answer": True}
+
+
+@pytest.mark.anyio
+async def test_string_queries_preserved_when_question_missing() -> None:
+    """String-valued queries must still be used as the prompt when question is omitted."""
+    solver = ClassificationSolver(_make_config())
+    fake_response = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content='{"objects": [1]}'))]
+    )
+    mock_create = AsyncMock(return_value=fake_response)
+    solver._client = SimpleNamespace(
+        chat=SimpleNamespace(completions=SimpleNamespace(create=mock_create))
+    )
+
+    result = await solver.solve(
+        {
+            "type": "ReCaptchaV2Classification",
+            "image": _sample_b64_png(),
+            "queries": "Select all buses",
+        }
+    )
+
+    messages = mock_create.call_args.kwargs["messages"]
+    text_blocks = [
+        item for item in messages[1]["content"] if item.get("type") == "text"
+    ]
+    assert text_blocks[0]["text"] == "Select all buses"
+    assert result == {"objects": [1]}

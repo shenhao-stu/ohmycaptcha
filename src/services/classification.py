@@ -99,8 +99,14 @@ class ClassificationSolver:
         task_type = params.get("type", "")
         system_prompt = self._get_system_prompt(task_type)
         raw_question = params.get("question")
-        # Never fall back to `queries` (which may hold a list of base64 images)
-        question = raw_question if isinstance(raw_question, str) else ""
+        raw_queries = params.get("queries")
+        # Preserve string-valued `queries` fallback while excluding image lists
+        if isinstance(raw_question, str) and raw_question:
+            question = raw_question
+        elif isinstance(raw_queries, str):
+            question = raw_queries
+        else:
+            question = ""
 
         # Handle different image field names across task types
         images = self._extract_images(params)
