@@ -30,6 +30,11 @@ def _make_config() -> Config:
     )
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 @pytest.mark.anyio
 async def test_transcribe_audio_uses_input_audio_content_block() -> None:
     """Audio transcription must send MP3 bytes using the OpenAI input_audio block."""
