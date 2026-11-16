@@ -93,6 +93,7 @@ class ClassificationSolver:
         self._client = AsyncOpenAI(
             base_url=config.local_base_url,
             api_key=config.local_api_key,
+            timeout=config.captcha_timeout,
         )
 
     async def solve(self, params: dict[str, Any]) -> dict[str, Any]:
