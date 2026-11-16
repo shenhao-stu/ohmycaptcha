@@ -98,7 +98,9 @@ class ClassificationSolver:
     async def solve(self, params: dict[str, Any]) -> dict[str, Any]:
         task_type = params.get("type", "")
         system_prompt = self._get_system_prompt(task_type)
-        question = params.get("question", "") or params.get("queries", "")
+        raw_question = params.get("question")
+        # Never fall back to `queries` (which may hold a list of base64 images)
+        question = raw_question if isinstance(raw_question, str) else ""
 
         # Handle different image field names across task types
         images = self._extract_images(params)
@@ -106,6 +108,13 @@ class ClassificationSolver:
             raise ValueError("No image data provided")
 
         result = await self._classify(system_prompt, question, images)
+        # Expose `objects` alongside `answer` for HCaptcha grid responses
+        if (
+            task_type == "HCaptchaClassification"
+            and isinstance(result.get("answer"), list)
+            and "objects" not in result
+        ):
+            result["objects"] = result["answer"]
         return result
 
     @staticmethod
