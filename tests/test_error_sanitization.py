@@ -9,6 +9,11 @@ import pytest
 from src.services.task_manager import TaskManager, TaskStatus
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 @pytest.mark.anyio
 async def test_failed_task_sanitizes_internal_exception_details() -> None:
     """Internal URLs or credentials in solver exceptions must not leak to error_description."""
