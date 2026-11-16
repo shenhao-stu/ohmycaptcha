@@ -256,8 +256,8 @@ class RecaptchaV2Solver:
                             ),
                         },
                         {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:audio/mp3;base64,{audio_b64}"},
+                            "type": "input_audio",
+                            "input_audio": {"data": audio_b64, "format": "mp3"},
                         },
                     ],
                 }
