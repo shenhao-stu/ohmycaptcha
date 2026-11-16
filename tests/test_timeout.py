@@ -44,6 +44,11 @@ def test_classification_passes_captcha_timeout() -> None:
         assert mock_openai.call_args.kwargs.get("timeout") == 42
 
 
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
+
+
 @pytest.mark.anyio
 async def test_recaptcha_v2_passes_captcha_timeout() -> None:
     """RecaptchaV2Solver._transcribe_audio must pass config.captcha_timeout to httpx."""
