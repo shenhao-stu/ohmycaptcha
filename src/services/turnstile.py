@@ -121,9 +121,7 @@ class TurnstileSolver:
 
             # Try clicking the Turnstile checkbox
             try:
-                iframe_element = page.frame_locator(
-                    'iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]'
-                )
+                iframe_element = await self._checkbox_frame(page, website_key)
                 checkbox = iframe_element.locator(
                     'input[type="checkbox"], .ctp-checkbox-label, label'
                 )
@@ -142,3 +140,13 @@ class TurnstileSolver:
             raise RuntimeError("Turnstile token not obtained within timeout")
         finally:
             await context.close()
+
+    async def _checkbox_frame(self, page: Any, website_key: str) -> Any:
+        """Return the Turnstile frame locator scoped by websiteKey when present."""
+        if website_key:
+            scoped = f'[data-sitekey="{website_key}"] iframe'
+            if await page.locator(scoped).count() > 0:
+                return page.frame_locator(scoped)
+        return page.frame_locator(
+            'iframe[src*="challenges.cloudflare.com"], iframe[src*="turnstile"]'
+        )

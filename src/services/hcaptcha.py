@@ -117,10 +117,8 @@ class HCaptchaSolver:
             await page.mouse.move(400, 300)
             await asyncio.sleep(1)
 
-            # Click only the checkbox iframe — match by specific title to avoid the challenge iframe
-            iframe_element = page.frame_locator(
-                'iframe[title="Widget containing checkbox for hCaptcha security challenge"]'
-            )
+            # Click only the checkbox iframe — scope by websiteKey when available
+            iframe_element = await self._checkbox_frame(page, website_key)
             checkbox = iframe_element.locator("#checkbox")
             await checkbox.click(timeout=10_000)
 
@@ -140,3 +138,14 @@ class HCaptchaSolver:
             return token
         finally:
             await context.close()
+
+    async def _checkbox_frame(self, page: Any, website_key: str) -> Any:
+        """Return the hCaptcha checkbox frame locator scoped by websiteKey when present."""
+        base_selector = (
+            'iframe[title="Widget containing checkbox for hCaptcha security challenge"]'
+        )
+        if website_key:
+            scoped = f'[data-sitekey="{website_key}"] {base_selector}'
+            if await page.locator(scoped).count() > 0:
+                return page.frame_locator(scoped)
+        return page.frame_locator(base_selector)

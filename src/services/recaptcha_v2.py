@@ -147,7 +147,7 @@ class RecaptchaV2Solver:
                     [website_key],
                 )
             else:
-                token = await self._solve_checkbox(page)
+                token = await self._solve_checkbox(page, website_key)
 
             if not isinstance(token, str) or len(token) < 20:
                 raise RuntimeError(f"Invalid reCAPTCHA v2 token: {token!r}")
@@ -157,10 +157,18 @@ class RecaptchaV2Solver:
         finally:
             await context.close()
 
-    async def _solve_checkbox(self, page: Any) -> str | None:
+    async def _checkbox_frame(self, page: Any, website_key: str = "") -> Any:
+        """Return the reCAPTCHA checkbox frame locator scoped by websiteKey when present."""
+        base_selector = 'iframe[title="reCAPTCHA"]'
+        if website_key:
+            scoped = f'[data-sitekey="{website_key}"] {base_selector}'
+            if await page.locator(scoped).count() > 0:
+                return page.frame_locator(scoped).first
+        return page.frame_locator(base_selector).first
+
+    async def _solve_checkbox(self, page: Any, website_key: str = "") -> str | None:
         """Click the reCAPTCHA checkbox. If a visual challenge appears, try audio path."""
-        # The checkbox iframe always has title="reCAPTCHA"
-        checkbox_frame = page.frame_locator('iframe[title="reCAPTCHA"]').first
+        checkbox_frame = await self._checkbox_frame(page, website_key)
         checkbox = checkbox_frame.locator("#recaptcha-anchor")
         await checkbox.click(timeout=10_000)
         await asyncio.sleep(2)
