@@ -1,12 +1,19 @@
 FROM python:3.11-slim
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
 WORKDIR /app
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir --root-user-action=ignore -r requirements.txt
-RUN playwright install --with-deps chromium
+RUN playwright install --with-deps chromium && chmod -R a+rX /ms-playwright
 
 COPY . .
+
+RUN useradd --create-home --shell /bin/bash appuser \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 
