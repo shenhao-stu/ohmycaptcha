@@ -16,7 +16,7 @@ from ..models.task import (
     GetTaskResultResponse,
     SolutionObject,
 )
-from ..services.task_manager import TaskStatus, task_manager
+from ..services.task_manager import TaskQueueFullError, TaskStatus, task_manager
 
 log = logging.getLogger(__name__)
 
@@ -111,7 +111,14 @@ async def create_task(request: CreateTaskRequest) -> CreateTaskResponse:
             )
 
     params = request.task.model_dump(exclude_none=True)
-    task_id = task_manager.create_task(request.task.type, params)
+    try:
+        task_id = task_manager.create_task(request.task.type, params)
+    except TaskQueueFullError:
+        return CreateTaskResponse(
+            errorId=1,
+            errorCode="ERROR_NO_SLOT_AVAILABLE",
+            errorDescription="Task queue is full, please retry later",
+        )
 
     log.info("Created task %s (type=%s)", task_id, request.task.type)
     return CreateTaskResponse(errorId=0, taskId=task_id)
