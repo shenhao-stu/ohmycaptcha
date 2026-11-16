@@ -33,14 +33,19 @@ window.chrome = {runtime: {}, loadTimes: () => {}, csi: () => {}};
 """
 
 _EXTRACT_TOKEN_JS = """
-() => {
-    const textarea = document.querySelector('#g-recaptcha-response')
-        || document.querySelector('[name="g-recaptcha-response"]');
+(sitekey) => {
+    const scope = sitekey
+        ? Array.from(document.querySelectorAll('[data-sitekey]'))
+            .find((el) => el.getAttribute('data-sitekey') === sitekey) || null
+        : null;
+    const root = scope || document;
+    const textarea = root.querySelector('#g-recaptcha-response')
+        || root.querySelector('[name="g-recaptcha-response"]');
     if (textarea && textarea.value && textarea.value.length > 20) {
         return textarea.value;
     }
     const gr = window.grecaptcha?.enterprise || window.grecaptcha;
-    if (gr && typeof gr.getResponse === 'function') {
+    if (!scope && gr && typeof gr.getResponse === 'function') {
         const resp = gr.getResponse();
         if (resp && resp.length > 20) return resp;
     }
@@ -174,21 +179,21 @@ class RecaptchaV2Solver:
         await asyncio.sleep(2)
 
         # Check if token was issued immediately (low-risk sessions)
-        token = await page.evaluate(_EXTRACT_TOKEN_JS)
+        token = await page.evaluate(_EXTRACT_TOKEN_JS, website_key)
         if isinstance(token, str) and len(token) > 20:
             return token
 
         # Challenge dialog appeared — try audio challenge path
         log.info("reCAPTCHA challenge detected, attempting audio path")
         try:
-            token = await self._solve_audio_challenge(page)
+            token = await self._solve_audio_challenge(page, website_key)
         except Exception as exc:
             log.warning("Audio challenge path failed: %s", exc)
             token = None
 
         return token
 
-    async def _solve_audio_challenge(self, page: Any) -> str | None:
+    async def _solve_audio_challenge(self, page: Any, website_key: str = "") -> str | None:
         """Click the audio button in the bframe and transcribe the audio."""
         # The challenge bframe has title containing "recaptcha challenge"
         bframe = page.frame_locator('iframe[title*="recaptcha challenge"]')
@@ -241,7 +246,7 @@ class RecaptchaV2Solver:
         await verify_btn.click(timeout=8_000)
         await asyncio.sleep(2)
 
-        return await page.evaluate(_EXTRACT_TOKEN_JS)
+        return await page.evaluate(_EXTRACT_TOKEN_JS, website_key)
 
     async def _transcribe_audio(self, audio_bytes: bytes) -> str | None:
         """Send audio bytes to the OpenAI-compatible audio transcription endpoint."""

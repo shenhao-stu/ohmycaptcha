@@ -24,13 +24,18 @@ window.chrome = {runtime: {}, loadTimes: () => {}, csi: () => {}};
 """
 
 _EXTRACT_HCAPTCHA_TOKEN_JS = """
-() => {
-    const textarea = document.querySelector('[name="h-captcha-response"]')
-        || document.querySelector('[name="g-recaptcha-response"]');
+(sitekey) => {
+    const scope = sitekey
+        ? Array.from(document.querySelectorAll('[data-sitekey]'))
+            .find((el) => el.getAttribute('data-sitekey') === sitekey) || null
+        : null;
+    const root = scope || document;
+    const textarea = root.querySelector('[name="h-captcha-response"]')
+        || root.querySelector('[name="g-recaptcha-response"]');
     if (textarea && textarea.value && textarea.value.length > 20) {
         return textarea.value;
     }
-    if (window.hcaptcha && typeof window.hcaptcha.getResponse === 'function') {
+    if (!scope && window.hcaptcha && typeof window.hcaptcha.getResponse === 'function') {
         const resp = window.hcaptcha.getResponse();
         if (resp && resp.length > 20) return resp;
     }
@@ -125,7 +130,7 @@ class HCaptchaSolver:
             # Wait for token — may require challenge completion; poll up to 30s
             for _ in range(6):
                 await asyncio.sleep(5)
-                token = await page.evaluate(_EXTRACT_HCAPTCHA_TOKEN_JS)
+                token = await page.evaluate(_EXTRACT_HCAPTCHA_TOKEN_JS, website_key)
                 if isinstance(token, str) and len(token) > 20:
                     break
             else:

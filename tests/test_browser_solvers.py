@@ -7,10 +7,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from src.core.config import Config
-from src.services.hcaptcha import HCaptchaSolver
-from src.services.recaptcha_v2 import RecaptchaV2Solver
+from src.services.hcaptcha import _EXTRACT_HCAPTCHA_TOKEN_JS, HCaptchaSolver
+from src.services.recaptcha_v2 import _EXTRACT_TOKEN_JS, RecaptchaV2Solver
 from src.services.recaptcha_v3 import _EXECUTE_JS, RecaptchaV3Solver
-from src.services.turnstile import TurnstileSolver
+from src.services.turnstile import _EXTRACT_TURNSTILE_TOKEN_JS, TurnstileSolver
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
 
 
 def _make_config() -> Config:
@@ -34,6 +39,17 @@ def _make_config() -> Config:
 def test_execute_js_supports_enterprise_script() -> None:
     """_EXECUTE_JS must support enterprise.js injection when isEnterprise is true."""
     assert "enterprise.js?render=" in _EXECUTE_JS
+
+
+def test_token_extractors_scope_by_sitekey() -> None:
+    """Token extraction JS helpers must accept sitekey and scope to [data-sitekey]."""
+    for script in (
+        _EXTRACT_HCAPTCHA_TOKEN_JS,
+        _EXTRACT_TOKEN_JS,
+        _EXTRACT_TURNSTILE_TOKEN_JS,
+    ):
+        assert "(sitekey)" in script
+        assert "data-sitekey" in script
 
 
 @pytest.mark.anyio
