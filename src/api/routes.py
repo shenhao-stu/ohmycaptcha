@@ -156,7 +156,12 @@ async def get_task_result(
 @router.post("/getBalance", response_model=GetBalanceResponse)
 async def get_balance(request: GetBalanceRequest) -> GetBalanceResponse:
     if config.client_key and request.clientKey != config.client_key:
-        return GetBalanceResponse(errorId=1, balance=0)
+        return GetBalanceResponse(
+            errorId=1,
+            balance=0,
+            errorCode="ERROR_KEY_DOES_NOT_EXIST",
+            errorDescription="Invalid clientKey",
+        )
     return GetBalanceResponse(errorId=0, balance=99999.0)
 
 

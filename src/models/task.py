@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 # ── createTask ──────────────────────────────────────────────
@@ -68,3 +68,5 @@ class GetBalanceRequest(BaseModel):
 class GetBalanceResponse(BaseModel):
     errorId: int = 0
     balance: float = 99999.0
+    errorCode: str | None = None
+    errorDescription: str | None = None

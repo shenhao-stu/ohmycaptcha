@@ -66,7 +66,7 @@ Required fields: `websiteURL`, `websiteKey`.
 - `ImageToTextTaskMuggle`
 - `ImageToTextTaskM1`
 
-Required fields: `body` (base64-encoded image).
+Required fields: `body` (base64-encoded image). All three variants return structured recognition output serialized as JSON in `solution.text`.
 
 #### Image classification
 
