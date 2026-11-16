@@ -115,9 +115,9 @@ curl http://localhost:8000/api/v1/health
 
 | Task Type | Solution Field |
 |-----------|----------------|
-| `ImageToTextTask` | `text` (structured JSON) |
-| `ImageToTextTaskMuggle` | `text` |
-| `ImageToTextTaskM1` | `text` |
+| `ImageToTextTask` | `text` (structured action JSON) |
+| `ImageToTextTaskMuggle` | `text` (structured action JSON) |
+| `ImageToTextTaskM1` | `text` (structured action JSON) |
 
 ### Image classification (4 types)
 

@@ -8,13 +8,11 @@ import sys
 from pathlib import Path
 from unittest.mock import AsyncMock
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     _ = sys.path.insert(0, str(PROJECT_ROOT))
 
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient  # noqa: E402
 
 
 def _load_app(*, client_key: str | None = None) -> TestClient:
@@ -110,6 +108,7 @@ def test_get_balance_requires_client_key() -> None:
     bad = client.post("/getBalance", json={"clientKey": "wrong"})
     good = client.post("/getBalance", json={"clientKey": "secret"})
     assert bad.json()["errorId"] == 1
+    assert bad.json()["errorCode"] == "ERROR_KEY_DOES_NOT_EXIST"
     assert good.json()["errorId"] == 0
 
 
