@@ -43,13 +43,15 @@ You can also import the included `render.yaml` blueprint.
 Set these as protected environment variables in the Render dashboard:
 
 - `CLIENT_KEY`
-- `CAPTCHA_API_KEY`
+- `CLOUD_API_KEY`
 
 ### Recommended variables
 
-- `CAPTCHA_BASE_URL=https://your-openai-compatible-endpoint/v1`
-- `CAPTCHA_MODEL=gpt-5.4`
-- `CAPTCHA_MULTIMODAL_MODEL=qwen3.5-2b`
+- `CLOUD_BASE_URL=https://your-openai-compatible-endpoint/v1`
+- `CLOUD_MODEL=gpt-5.4`
+- `LOCAL_BASE_URL=https://your-openai-compatible-endpoint/v1`
+- `LOCAL_API_KEY=your-api-key`
+- `LOCAL_MODEL=Qwen/Qwen3.5-2B`
 - `CAPTCHA_RETRIES=3`
 - `CAPTCHA_TIMEOUT=30`
 - `BROWSER_HEADLESS=true`

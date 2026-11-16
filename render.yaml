@@ -9,14 +9,18 @@ services:
         value: "1"
       - key: CLIENT_KEY
         sync: false
-      - key: CAPTCHA_BASE_URL
+      - key: CLOUD_BASE_URL
         value: "https://your-openai-compatible-endpoint/v1"
-      - key: CAPTCHA_API_KEY
+      - key: CLOUD_API_KEY
         sync: false
-      - key: CAPTCHA_MODEL
+      - key: CLOUD_MODEL
         value: "gpt-5.4"
-      - key: CAPTCHA_MULTIMODAL_MODEL
-        value: "qwen3.5-2b"
+      - key: LOCAL_BASE_URL
+        value: "https://your-openai-compatible-endpoint/v1"
+      - key: LOCAL_API_KEY
+        sync: false
+      - key: LOCAL_MODEL
+        value: "Qwen/Qwen3.5-2B"
       - key: CAPTCHA_RETRIES
         value: "3"
       - key: CAPTCHA_TIMEOUT
