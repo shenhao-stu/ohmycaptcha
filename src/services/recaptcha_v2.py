@@ -214,7 +214,7 @@ class RecaptchaV2Solver:
             raise RuntimeError("Could not find audio challenge download link")
 
         # Download the audio file
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=self._config.captcha_timeout) as client:
             resp = await client.get(audio_src)
             resp.raise_for_status()
             audio_bytes = resp.content
@@ -266,7 +266,7 @@ class RecaptchaV2Solver:
             "temperature": 0,
         }
 
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx.AsyncClient(timeout=self._config.captcha_timeout) as client:
             resp = await client.post(
                 f"{self._config.captcha_base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self._config.captcha_api_key}"},
