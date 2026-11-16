@@ -75,7 +75,7 @@ class TaskManager:
         except Exception as exc:
             task.status = TaskStatus.FAILED
             task.error_code = "ERROR_CAPTCHA_UNSOLVABLE"
-            task.error_description = str(exc)
+            task.error_description = "Task solving failed"
             log.error("Task %s failed: %s", task.id, exc)
 
     def _cleanup_expired(self) -> None:
