@@ -5,7 +5,14 @@ from __future__ import annotations
 import asyncio
 import importlib
 
+from datetime import datetime, timedelta
+
 import pytest
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
 
 
 class _SlowSolver:
@@ -52,3 +59,21 @@ async def test_task_manager_rejects_when_queue_full() -> None:
         mgr.create_task("ImageToTextTask", {"body": "3"})
 
     await asyncio.sleep(0.15)
+
+
+@pytest.mark.anyio
+async def test_cleanup_preserves_unfinished_tasks() -> None:
+    """TTL cleanup must not remove tasks still in PROCESSING state."""
+    tm = importlib.import_module("src.services.task_manager")
+    mgr = tm.TaskManager(max_concurrent_tasks=1, max_queued_tasks=2)
+    solver = _SlowSolver()
+    mgr.register_solver("ImageToTextTask", solver)
+
+    tid = mgr.create_task("ImageToTextTask", {"body": "1"})
+    task = mgr.get_task(tid)
+    assert task is not None
+    task.created_at = datetime.utcnow() - timedelta(minutes=30)
+
+    mgr._cleanup_expired()
+    assert mgr.get_task(tid) is not None
+    await asyncio.sleep(0.1)

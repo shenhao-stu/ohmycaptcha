@@ -103,7 +103,7 @@ class TaskManager:
         expired = [
             tid
             for tid, t in self._tasks.items()
-            if now - t.created_at > self.TASK_TTL
+            if t.status != TaskStatus.PROCESSING and now - t.created_at > self.TASK_TTL
         ]
         for tid in expired:
             del self._tasks[tid]
