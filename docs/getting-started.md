@@ -39,6 +39,8 @@ playwright install --with-deps chromium
 
 ## Start the service
 
+If you use `LOCAL_BASE_URL`, start your local SGLang/vLLM inference server first (see [Local Model Deployment](deployment/local-model.md)), or point `LOCAL_BASE_URL` to a remote OpenAI-compatible vision endpoint.
+
 ```bash
 export CLIENT_KEY="your-client-key"
 export LOCAL_BASE_URL="http://localhost:30000/v1"

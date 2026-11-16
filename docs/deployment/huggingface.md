@@ -37,13 +37,13 @@ In the Space settings, add the following secrets:
 
 - `CLIENT_KEY`
 - `CLOUD_API_KEY`
+- `LOCAL_API_KEY`
 
 Add or override variables as needed:
 
 - `CLOUD_BASE_URL`
 - `CLOUD_MODEL`
 - `LOCAL_BASE_URL`
-- `LOCAL_API_KEY`
 - `LOCAL_MODEL`
 - `BROWSER_HEADLESS=true`
 - `BROWSER_TIMEOUT=30`
