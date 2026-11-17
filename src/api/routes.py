@@ -73,8 +73,7 @@ async def create_task(request: CreateTaskRequest) -> CreateTaskResponse:
         return CreateTaskResponse(
             errorId=1,
             errorCode="ERROR_TASK_NOT_SUPPORTED",
-            errorDescription=f"Task type '{request.task.type}' is not supported. "
-            f"Supported: {supported}",
+            errorDescription=f"Task type '{request.task.type}' is not supported. Supported: {supported}",
         )
 
     # Validate required fields for browser-based tasks
@@ -97,12 +96,7 @@ async def create_task(request: CreateTaskRequest) -> CreateTaskResponse:
 
     # Validate required fields for classification tasks
     if request.task.type in _CLASSIFICATION_TASK_TYPES:
-        has_image = (
-            request.task.image
-            or request.task.images
-            or request.task.body
-            or request.task.queries
-        )
+        has_image = request.task.image or request.task.images or request.task.body or request.task.queries
         if not has_image:
             return CreateTaskResponse(
                 errorId=1,

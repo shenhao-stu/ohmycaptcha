@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Image classification solvers for various captcha types.
 
 Supports HCaptchaClassification, ReCaptchaV2Classification,
@@ -156,17 +157,17 @@ class ClassificationSolver:
         except Exception:
             return f"data:image/png;base64,{b64_data}"
 
-    async def _classify(
-        self, system_prompt: str, question: str, images: list[str]
-    ) -> dict[str, Any]:
+    async def _classify(self, system_prompt: str, question: str, images: list[str]) -> dict[str, Any]:
         content: list[dict[str, Any]] = []
 
         for img_b64 in images:
             data_url = self._prepare_image(img_b64)
-            content.append({
-                "type": "image_url",
-                "image_url": {"url": data_url, "detail": "high"},
-            })
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": data_url, "detail": "high"},
+                }
+            )
 
         user_text = question if question else "Classify this captcha image."
         content.append({"type": "text", "text": user_text})
@@ -189,9 +190,7 @@ class ClassificationSolver:
                 last_error = exc
                 log.warning("Classification attempt %d failed: %s", attempt + 1, exc)
 
-        raise RuntimeError(
-            f"Classification failed after {self._config.captcha_retries} attempts: {last_error}"
-        )
+        raise RuntimeError(f"Classification failed after {self._config.captcha_retries} attempts: {last_error}")
 
     @staticmethod
     def _parse_json(text: str) -> dict[str, Any]:

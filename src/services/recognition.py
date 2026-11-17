@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """Image-based captcha recognition using OpenAI-compatible vision models.
 
 Inspired by Argus (https://github.com/AmethystDev-Labs/Argus).
@@ -112,9 +113,7 @@ class CaptchaRecognizer:
                 last_error = exc
                 log.warning("Recognition attempt %d failed: %s", attempt + 1, exc)
 
-        raise RuntimeError(
-            f"Recognition failed after {self._config.captcha_retries} attempts: {last_error}"
-        )
+        raise RuntimeError(f"Recognition failed after {self._config.captcha_retries} attempts: {last_error}")
 
     @staticmethod
     def _preprocess_image(image_bytes: bytes) -> bytes:

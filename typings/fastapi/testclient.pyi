@@ -1,10 +1,8 @@
 from typing import Any
 
-
 class Response:
     status_code: int
     def json(self) -> Any: ...
-
 
 class TestClient:
     def __init__(self, app: Any) -> None: ...

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel
 
 # ── createTask ──────────────────────────────────────────────
+
 
 class TaskObject(BaseModel):
     type: str
@@ -37,6 +37,7 @@ class CreateTaskResponse(BaseModel):
 
 # ── getTaskResult ───────────────────────────────────────────
 
+
 class GetTaskResultRequest(BaseModel):
     clientKey: str
     taskId: str
@@ -60,6 +61,7 @@ class GetTaskResultResponse(BaseModel):
 
 
 # ── getBalance ──────────────────────────────────────────────
+
 
 class GetBalanceRequest(BaseModel):
     clientKey: str

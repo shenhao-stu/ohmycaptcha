@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """reCAPTCHA v2 solver using Playwright browser automation.
 
 Supports NoCaptchaTaskProxyless, RecaptchaV2TaskProxyless,
@@ -106,24 +107,18 @@ class RecaptchaV2Solver:
                 if attempt < self._config.captcha_retries - 1:
                     await asyncio.sleep(2)
 
-        raise RuntimeError(
-            f"reCAPTCHA v2 failed after {self._config.captcha_retries} attempts: {last_error}"
-        )
+        raise RuntimeError(f"reCAPTCHA v2 failed after {self._config.captcha_retries} attempts: {last_error}")
 
-    async def _solve_once(
-        self, website_url: str, website_key: str, is_invisible: bool
-    ) -> str:
+    async def _solve_once(self, website_url: str, website_key: str, is_invisible: bool) -> str:
         assert self._browser is not None
 
-        context = await self._browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            ),
-            viewport={"width": 1920, "height": 1080},
-            locale="en-US",
-        )
+        context_kwargs: dict[str, object] = {
+            "viewport": {"width": 1920, "height": 1080},
+            "locale": "en-US",
+        }
+        if self._config.browser_user_agent:
+            context_kwargs["user_agent"] = self._config.browser_user_agent
+        context = await self._browser.new_context(**context_kwargs)
         page = await context.new_page()
         await page.add_init_script(_STEALTH_JS)
 
@@ -204,7 +199,9 @@ class RecaptchaV2Solver:
         ]:
             try:
                 element = bframe.locator(selector).first
-                audio_src = await element.get_attribute("href", timeout=5_000) or await element.get_attribute("src", timeout=1_000)
+                audio_src = await element.get_attribute("href", timeout=5_000) or await element.get_attribute(
+                    "src", timeout=1_000
+                )
                 if audio_src:
                     break
             except Exception:

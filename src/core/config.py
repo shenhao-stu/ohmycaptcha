@@ -40,10 +40,13 @@ class Config:
 
     captcha_retries: int
     captcha_timeout: int
+    max_concurrency: int
+    task_ttl_minutes: int
 
     # Playwright browser
     browser_headless: bool
     browser_timeout: int  # seconds
+    browser_user_agent: str | None
 
     # ── Convenience aliases (backward-compat) ──
 
@@ -65,10 +68,13 @@ class Config:
 
 
 def load_config() -> Config:
+    client_key = os.environ.get("CLIENT_KEY", "").strip()
+    if not client_key:
+        raise ValueError("CLIENT_KEY is required; anonymous access is not allowed")
     return Config(
         server_host=os.environ.get("SERVER_HOST", "0.0.0.0"),
         server_port=int(os.environ.get("SERVER_PORT", "8000")),
-        client_key=os.environ.get("CLIENT_KEY", "").strip() or None,
+        client_key=client_key,
         # Cloud model
         cloud_base_url=os.environ.get(
             "CLOUD_BASE_URL",
@@ -97,9 +103,11 @@ def load_config() -> Config:
         ),
         captcha_retries=int(os.environ.get("CAPTCHA_RETRIES", "3")),
         captcha_timeout=int(os.environ.get("CAPTCHA_TIMEOUT", "30")),
-        browser_headless=os.environ.get("BROWSER_HEADLESS", "true").strip().lower()
-        in {"1", "true", "yes"},
+        max_concurrency=int(os.environ.get("CAPTCHA_MAX_CONCURRENCY", "4")),
+        task_ttl_minutes=int(os.environ.get("CAPTCHA_TASK_TTL_MINUTES", "10")),
+        browser_headless=os.environ.get("BROWSER_HEADLESS", "true").strip().lower() in {"1", "true", "yes"},
         browser_timeout=int(os.environ.get("BROWSER_TIMEOUT", "30")),
+        browser_user_agent=os.environ.get("BROWSER_USER_AGENT") or None,
     )
 
 
