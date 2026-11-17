@@ -1,0 +1,58 @@
+[project]
+name = "ohmycaptcha"
+version = "0.1.0"
+description = "Self-hosted YesCaptcha-compatible solver for Robotax"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.119,<0.120",
+  "httpx>=0.28,<0.29",
+  "openai>=1.82,<2",
+  "pillow>=13,<14",
+  "pydantic>=2.10,<3",
+  "playwright>=1.49,<2",
+  "uvicorn[standard]>=0.32,<0.33",
+]
+
+[dependency-groups]
+dev = [
+  "mypy>=1.14,<2",
+  "pytest>=8.3,<9",
+  "ruff>=0.9,<1",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/robotax_captcha"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "src"
+strict = true
+ignore_missing_imports = true
+
+# Vendored upstream solvers keep their original typing debt; the hardened core
+# (config, task_manager, main, models) remains fully checked.
+[[tool.mypy.overrides]]
+module = [
+  "robotax_captcha.services.classification",
+  "robotax_captcha.services.hcaptcha",
+  "robotax_captcha.services.recaptcha_v2",
+  "robotax_captcha.services.recaptcha_v3",
+  "robotax_captcha.services.recognition",
+  "robotax_captcha.services.turnstile",
+]
+ignore_errors = true

@@ -4,9 +4,6 @@ import os
 
 import uvicorn
 
-from src.main import app
-
-
 if __name__ == "__main__":
     from src.core.config import config
 

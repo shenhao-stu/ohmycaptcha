@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """reCAPTCHA v3 solver using Playwright browser automation."""
 
 from __future__ import annotations
@@ -66,9 +67,7 @@ class RecaptchaV3Solver:
                 "--disable-gpu",
             ],
         )
-        log.info(
-            "Playwright browser started (headless=%s)", self._config.browser_headless
-        )
+        log.info("Playwright browser started (headless=%s)", self._config.browser_headless)
 
     async def stop(self) -> None:
         if self._browser:
@@ -85,9 +84,7 @@ class RecaptchaV3Solver:
         last_error: Exception | None = None
         for attempt in range(self._config.captcha_retries):
             try:
-                token = await self._solve_once(
-                    website_url, website_key, page_action
-                )
+                token = await self._solve_once(website_url, website_key, page_action)
                 return {"gRecaptchaResponse": token}
             except Exception as exc:
                 last_error = exc
@@ -101,33 +98,25 @@ class RecaptchaV3Solver:
                 if attempt < self._config.captcha_retries - 1:
                     await asyncio.sleep(2)
 
-        raise RuntimeError(
-            f"Failed after {self._config.captcha_retries} attempts: {last_error}"
-        )
+        raise RuntimeError(f"Failed after {self._config.captcha_retries} attempts: {last_error}")
 
-    async def _solve_once(
-        self, website_url: str, website_key: str, page_action: str
-    ) -> str:
+    async def _solve_once(self, website_url: str, website_key: str, page_action: str) -> str:
         assert self._browser is not None
 
-        context = await self._browser.new_context(
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/131.0.0.0 Safari/537.36"
-            ),
-            viewport={"width": 1920, "height": 1080},
-            locale="en-US",
-        )
+        context_kwargs: dict[str, object] = {
+            "viewport": {"width": 1920, "height": 1080},
+            "locale": "en-US",
+        }
+        if self._config.browser_user_agent:
+            context_kwargs["user_agent"] = self._config.browser_user_agent
+        context = await self._browser.new_context(**context_kwargs)
 
         page = await context.new_page()
         await page.add_init_script(_STEALTH_JS)
 
         try:
             timeout_ms = self._config.browser_timeout * 1000
-            await page.goto(
-                website_url, wait_until="networkidle", timeout=timeout_ms
-            )
+            await page.goto(website_url, wait_until="networkidle", timeout=timeout_ms)
 
             # Simulate minimal human-like behaviour to improve score
             await page.mouse.move(400, 300)
@@ -143,18 +132,14 @@ class RecaptchaV3Solver:
                     timeout=10_000,
                 )
             except Exception:
-                log.info(
-                    "grecaptcha not detected on page, will attempt script injection"
-                )
+                log.info("grecaptcha not detected on page, will attempt script injection")
 
             token = await page.evaluate(_EXECUTE_JS, [website_key, page_action])
 
             if not isinstance(token, str) or len(token) < 20:
                 raise RuntimeError(f"Invalid token received: {token!r}")
 
-            log.info(
-                "Got reCAPTCHA token for %s (len=%d)", website_url, len(token)
-            )
+            log.info("Got reCAPTCHA token for %s (len=%d)", website_url, len(token))
             return token
         finally:
             await context.close()
